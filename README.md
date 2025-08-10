@@ -1,3 +1,7 @@
+# Strava Coach & Concierge
+
+![Strava Coach Screenshot](main.png)
+
 # install deps
 
 pnpm install
