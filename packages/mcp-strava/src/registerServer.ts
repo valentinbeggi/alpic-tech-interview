@@ -3,48 +3,18 @@ import {
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-
 import { getUserId } from "./getUserId";
 import { daysBetween, PARIS_TZ, toLocalISOString } from "./toLocalIsoString";
-import { ActivitySummary, StravaClient } from "@strava/sdk";
-
-function matchesSport(a: ActivitySummary, want?: string) {
-  if (!want) return true;
-  const target = want.trim().toLowerCase();
-  const s1 = (a.sport_type ?? "").toLowerCase();
-  const s2 = (a.type ?? "").toLowerCase();
-  return s1 === target || s2 === target;
-}
-
-async function findLatestActivity(
-  client: StravaClient,
-  sport?: string
-): Promise<ActivitySummary | undefined> {
-  const batch = await client.listMyActivities({ per_page: 50 });
-  return batch.find((a) => matchesSport(a, sport)) ?? batch[0];
-}
-
-// New: fetch latest N activities with optional sport filter
-async function findLatestActivities(
-  client: StravaClient,
-  count: number,
-  sport?: string
-): Promise<ActivitySummary[]> {
-  const out: ActivitySummary[] = [];
-  let page = 1;
-  const per_page = Math.min(Math.max(count, 30), 200);
-  while (out.length < count) {
-    const batch = await client.listMyActivities({ page, per_page });
-    if (!batch.length) break;
-    for (const a of batch) {
-      if (matchesSport(a, sport)) out.push(a);
-      if (out.length >= count) break;
-    }
-    page++;
-    if (page > 10) break;
-  }
-  return out.slice(0, count);
-}
+import { StravaClient } from "@strava/sdk";
+import { findLatestActivity, findLatestActivities } from "./stravaHelpers";
+import {
+  createManualShape,
+  getActivityShape,
+  getLastActivityShape,
+  getRecentActivitiesShape,
+  renameActivityShape,
+  renameArgsShape,
+} from "./schemas";
 
 export type StravaClientFactory = (userId: string) => Promise<StravaClient>;
 
@@ -52,41 +22,6 @@ export function registerStravaMcp(
   server: McpServer,
   deps: { getClient: StravaClientFactory }
 ) {
-  // ----- SCHEMAS -----
-  const createManualShape = {
-    name: z.string(),
-    type: z.string().default("Workout"),
-    start_date_local: z.string(), // "YYYY-MM-DDTHH:mm:ss" (local)
-    elapsed_time: z.number(), // seconds
-    description: z.string().optional(),
-    distance: z.number().optional(), // meters
-    commute: z.boolean().optional(),
-    private: z.boolean().optional(),
-  } as const;
-
-  const getActivityShape = {
-    id: z.number(),
-  } as const;
-
-  const getLastActivityShape = {
-    sport: z.string().optional(), // e.g. "Run", "Workout"
-  } as const;
-
-  // New: recent activities schema
-  const getRecentActivitiesShape = {
-    count: z.number().int().positive().max(50).default(3),
-    sport: z.string().optional(),
-  } as const;
-
-  const renameActivityShape = {
-    name: z.string().min(1), // new title
-    id: z.number().optional(), // optional explicit id
-    sport: z.string().optional(), // optional selector when id omitted
-  } as const;
-
-  // ----- TOOLS -----
-
-  // CREATE MANUAL ACTIVITY (with date guard)
   server.registerTool(
     "strava.createManualActivity",
     {
@@ -99,7 +34,6 @@ export function registerStravaMcp(
       const userId = getUserId(extra);
       const client = await deps.getClient(userId);
 
-      // Normalize / validate start_date_local — expect "YYYY-MM-DDTHH:mm:ss" (no timezone).
       const cleaned = String(input.start_date_local).replace(
         /([Zz]|[+-]\d{2}:?\d{2})$/,
         ""
@@ -116,7 +50,6 @@ export function registerStravaMcp(
         );
       }
 
-      // Guard: if more than 2 days in the past and not explicit, encourage confirmation
       const today = new Date();
       if (daysBetween(start, today) > 2) {
         throw new Error(
@@ -130,7 +63,6 @@ export function registerStravaMcp(
     }
   );
 
-  // GET ACTIVITY BY ID (explicit)
   server.registerTool(
     "strava.getActivity",
     {
@@ -147,7 +79,6 @@ export function registerStravaMcp(
     }
   );
 
-  // GET LAST ACTIVITY (no id required; optional sport filter)
   server.registerTool(
     "strava.getLastActivity",
     {
@@ -160,14 +91,12 @@ export function registerStravaMcp(
       const { sport } = z.object(getLastActivityShape).parse(args);
       const userId = getUserId(extra);
       const client = await deps.getClient(userId);
-
       const latest = await findLatestActivity(client, sport);
       if (!latest) throw new Error("No activities found for this account.");
       return { content: [{ type: "text", text: JSON.stringify(latest) }] };
     }
   );
 
-  // New: GET LAST N ACTIVITIES (optionally filter by sport)
   server.registerTool(
     "strava.getRecentActivities",
     {
@@ -185,7 +114,6 @@ export function registerStravaMcp(
     }
   );
 
-  // RENAME ACTIVITY (no id required; picks latest or latest matching sport)
   server.registerTool(
     "strava.renameActivity",
     {
@@ -222,10 +150,8 @@ export function registerStravaMcp(
     }
   );
 
-  // ----- RESOURCE (current athlete) -----
   server.registerResource(
     "athlete",
-    // static URI + list enumerator so Inspector can display it
     new ResourceTemplate("strava://athlete", {
       list: async () => ({
         resources: [{ name: "athlete", uri: "strava://athlete" }],
@@ -237,15 +163,13 @@ export function registerStravaMcp(
       mimeType: "application/json",
     },
     async (uri, _params, extra) => {
-      // derive user from auth/token
       const userId = getUserId(extra);
       const client = await deps.getClient(userId);
       const me = await client.me();
-
       return {
         contents: [
           {
-            uri: uri.href, // "strava://athlete"
+            uri: uri.href,
             mimeType: "application/json",
             text: JSON.stringify(me),
           },
@@ -254,23 +178,17 @@ export function registerStravaMcp(
     }
   );
 
-  // ----- PROMPT (generator only; does NOT rename) -----
-  const renameArgsShape = {
-    city: z.string().optional(),
-    distanceKm: z.string().optional(),
-    sport: z.string().optional(),
-  } as const;
-
+  const argsShape = renameArgsShape;
   server.registerPrompt(
     "rename-activity",
     {
       title: "Strava title generator",
       description:
         "Suggests short, friendly titles. Use 'strava.renameActivity' to apply.",
-      argsSchema: renameArgsShape,
+      argsSchema: argsShape,
     },
-    (args, _extra) => {
-      const raw = z.object(renameArgsShape).parse(args);
+    (args) => {
+      const raw = z.object(argsShape).parse(args);
       const { city, distanceKm, sport } = z
         .object({
           city: z.string().optional(),
