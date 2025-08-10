@@ -10,7 +10,6 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["packages/shared/src/*"],
       "@strava/sdk": ["packages/strava-sdk/src/index.ts"],
       "@mcp/strava": ["packages/mcp-strava/src/index.ts"]
     }
