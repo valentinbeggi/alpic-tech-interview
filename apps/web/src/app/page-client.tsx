@@ -49,15 +49,15 @@ export default function StravaCoachPage({ stravaConnected, user }: Props) {
             onClick={() =>
               sendMessage(
                 asUser(
-                  "Log a 45-min strength session yesterday at 18:15 (private)"
+                  "Log a 45-min strength session yesterday at 18:15 (private) with a name you choose"
                 )
               )
             }
             label="Log a strength session"
           />
           <QuickChip
-            onClick={() => sendMessage(asUser("Star segment 123456"))}
-            label="Star a segment"
+            onClick={() => sendMessage(asUser("Who am I ?"))}
+            label="My Athlete profile"
           />
         </div>
         <Separator className="mb-3" />

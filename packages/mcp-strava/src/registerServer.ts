@@ -64,15 +64,6 @@ export function registerStravaMcp(
     private: z.boolean().optional(),
   } as const;
 
-  const updateAthleteShape = {
-    weight: z.number().optional(),
-  } as const;
-
-  const starSegmentShape = {
-    segmentId: z.number(),
-    starred: z.boolean(),
-  } as const;
-
   const getActivityShape = {
     id: z.number(),
   } as const;
@@ -135,40 +126,6 @@ export function registerStravaMcp(
 
       const activity = { ...input, start_date_local: cleaned };
       const res = await client.createManualActivity(activity);
-      return { content: [{ type: "text", text: JSON.stringify(res) }] };
-    }
-  );
-
-  // UPDATE ATHLETE
-  server.registerTool(
-    "strava.updateAthlete",
-    {
-      title: "Update athlete profile",
-      description: "Update profile fields such as weight.",
-      inputSchema: updateAthleteShape,
-    },
-    async (args, extra) => {
-      const body = z.object(updateAthleteShape).parse(args);
-      const userId = getUserId(extra);
-      const client = await deps.getClient(userId);
-      const res = await client.updateAthlete(body);
-      return { content: [{ type: "text", text: JSON.stringify(res) }] };
-    }
-  );
-
-  // STAR / UNSTAR SEGMENT
-  server.registerTool(
-    "strava.starSegment",
-    {
-      title: "Star/unstar a segment",
-      description: "Manage starred segments.",
-      inputSchema: starSegmentShape,
-    },
-    async (args, extra) => {
-      const { segmentId, starred } = z.object(starSegmentShape).parse(args);
-      const userId = getUserId(extra);
-      const client = await deps.getClient(userId);
-      const res = await client.starSegment(segmentId, starred);
       return { content: [{ type: "text", text: JSON.stringify(res) }] };
     }
   );
@@ -268,20 +225,27 @@ export function registerStravaMcp(
   // ----- RESOURCE (current athlete) -----
   server.registerResource(
     "athlete",
-    new ResourceTemplate("strava://athlete/{userId}", { list: undefined }),
+    // static URI + list enumerator so Inspector can display it
+    new ResourceTemplate("strava://athlete", {
+      list: async () => ({
+        resources: [{ name: "athlete", uri: "strava://athlete" }],
+      }),
+    }),
     {
       title: "Athlete profile",
       description: "Current athlete profile (JSON).",
       mimeType: "application/json",
     },
-    async (_uri, _params, extra) => {
+    async (uri, _params, extra) => {
+      // derive user from auth/token
       const userId = getUserId(extra);
       const client = await deps.getClient(userId);
       const me = await client.me();
+
       return {
         contents: [
           {
-            uri: `strava://athlete/${userId}`,
+            uri: uri.href, // "strava://athlete"
             mimeType: "application/json",
             text: JSON.stringify(me),
           },
