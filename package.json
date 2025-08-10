@@ -1,0 +1,23 @@
+{
+  "name": "strava-agent-monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "pnpm -C apps/web dev",
+    "build": "pnpm -C apps/web build",
+    "start": "pnpm -C apps/web start",
+    "db:generate": "pnpm -C apps/web drizzle-kit generate",
+    "db:migrate": "pnpm -C apps/web drizzle-kit migrate",
+    "lint": "pnpm -C apps/web biome check --apply-unsafe"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@9.15.4",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
