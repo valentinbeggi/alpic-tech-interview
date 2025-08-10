@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { User } from "@/app/strava/types";
+import { signIn } from "next-auth/react";
 
 function StravaMark({ className }: { className?: string }) {
   return (
@@ -49,11 +50,11 @@ export function StravaHeader({
             </>
           ) : (
             <Button
-              asChild
               size="sm"
               className="bg-[#FC4C02] hover:bg-[#E64502]"
+              onClick={() => signIn("strava")}
             >
-              <a href="/api/auth/strava">Sign in with Strava</a>
+              Sign in with Strava
             </Button>
           )}
         </div>
