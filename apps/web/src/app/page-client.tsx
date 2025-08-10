@@ -29,7 +29,7 @@ export default function StravaCoachPage({ stravaConnected, user }: Props) {
   const grouped = useGroupedTranscript(messages);
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[#FC4C02]/10 via-background to-background text-foreground">
       <StravaHeader stravaConnected={stravaConnected} user={user} />
       <main className="mx-auto max-w-3xl px-4 pb-28 pt-4 md:pt-6">
         <div className="mb-4 flex flex-wrap gap-2">
@@ -61,7 +61,7 @@ export default function StravaCoachPage({ stravaConnected, user }: Props) {
           />
         </div>
         <Separator className="mb-3" />
-        <ScrollArea className="h-[60vh] rounded-lg border">
+        <ScrollArea className="h-[60vh] rounded-2xl border border-white/10 bg-background/50 shadow-xl backdrop-blur-md">
           <div className="space-y-4 p-4">
             {grouped.map((m) => {
               const isUser = m.role === "user";
@@ -88,8 +88,8 @@ export default function StravaCoachPage({ stravaConnected, user }: Props) {
               );
             })}
             {status === "streaming" && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-sm text-muted-foreground backdrop-blur">
+                <Loader2 className="h-4 w-4 animate-spin text-[#FC4C02]" />
                 Thinking…
               </div>
             )}
@@ -113,15 +113,24 @@ export default function StravaCoachPage({ stravaConnected, user }: Props) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            className="bg-background/60 backdrop-blur-md border-white/10 focus-visible:ring-[#FC4C02]/40"
             placeholder="Ask me about your Strava…"
             disabled={status !== "ready"}
           />
           {status === "streaming" ? (
-            <Button type="button" variant="secondary" onClick={() => stop()}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => stop()}
+              className="border-white/10 bg-white/10 backdrop-blur hover:bg-white/20"
+            >
               Stop
             </Button>
           ) : (
-            <Button type="submit">
+            <Button
+              type="submit"
+              className="bg-gradient-to-r from-[#FC4C02] to-[#FF7A33] text-white shadow-lg hover:from-[#E64502] hover:to-[#FF6A13]"
+            >
               <SendHorizonal className="mr-2 h-4 w-4" />
               Send
             </Button>

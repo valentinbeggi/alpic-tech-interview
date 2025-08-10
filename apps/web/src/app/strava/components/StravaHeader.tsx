@@ -23,18 +23,18 @@ export function StravaHeader({
   user: User | null;
 }) {
   return (
-    <header className="sticky top-0 z-10 w-full border-b bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-10 w-full border-b border-white/10 bg-background/60 backdrop-blur-md">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           <StravaMark className="h-6 w-6" />
-          <div className="font-semibold tracking-tight">
+          <div className="bg-gradient-to-r from-[#FC4C02] to-[#FF7A33] bg-clip-text font-semibold tracking-tight text-transparent">
             Strava Coach & Concierge
           </div>
         </div>
         <div className="flex items-center gap-3">
           {stravaConnected ? (
             <>
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 ring-1 ring-white/20">
                 <AvatarImage src={user?.image ?? undefined} />
                 <AvatarFallback>
                   {(user?.name ?? "U").slice(0, 1).toUpperCase()}
@@ -44,14 +44,19 @@ export function StravaHeader({
                 {user?.name ?? "Connected"}
               </span>
               <Separator orientation="vertical" className="mx-1 h-6" />
-              <Button asChild variant="outline" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-white/20 bg-white/5 backdrop-blur hover:bg-white/10"
+              >
                 <a href="/api/auth/signout">Sign out</a>
               </Button>
             </>
           ) : (
             <Button
               size="sm"
-              className="bg-[#FC4C02] hover:bg-[#E64502]"
+              className="bg-gradient-to-r from-[#FC4C02] to-[#FF7A33] text-white shadow-md hover:from-[#E64502] hover:to-[#FF6A13]"
               onClick={() => signIn("strava")}
             >
               Sign in with Strava

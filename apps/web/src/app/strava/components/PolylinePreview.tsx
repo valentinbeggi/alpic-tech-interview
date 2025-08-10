@@ -42,12 +42,23 @@ export function PolylinePreview({ encoded }: { encoded: string }) {
         y="0"
         width={width}
         height={height}
-        className="fill-background"
+        className="fill-background/40"
       />
+      {/* halo */}
       <path
         d={d}
+        stroke="white"
+        strokeOpacity={0.35}
+        strokeWidth={5}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* main route */}
+      <path
+        d={d}
+        className="text-[#FC4C02]"
         stroke="currentColor"
-        className="text-foreground/70"
         strokeWidth={3}
         fill="none"
         strokeLinecap="round"
