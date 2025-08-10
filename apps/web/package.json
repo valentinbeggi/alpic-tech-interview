@@ -6,10 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit push"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.8",
+    "@ai-sdk/react": "^2.0.8",
     "@auth/drizzle-adapter": "^1.10.0",
+    "@mcp/strava": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.17.2",
     "@strava/sdk": "workspace:^",
     "@vercel/analytics": "^1.5.0",
@@ -21,8 +26,9 @@
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.4",
     "lucide-react": "^0.539.0",
+    "mcp-handler": "^1.0.1",
     "next": "15.4.6",
-    "next-auth": "^4.24.11",
+    "next-auth": "^5.0.0-beta",
     "openai": "^5.12.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",

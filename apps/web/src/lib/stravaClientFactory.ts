@@ -15,7 +15,6 @@ export async function getUserStravaClient(
     if (!acc) throw new Error("No Strava account linked");
 
     const now = Math.floor(Date.now() / 1000);
-
     if ((acc.expires_at ?? 0) - now <= 60) {
       const res = await fetch(TOKEN_URL, {
         method: "POST",
@@ -27,11 +26,8 @@ export async function getUserStravaClient(
           refresh_token: acc.refresh_token ?? "",
         }),
       });
-
       if (!res.ok) throw new Error(`Refresh failed: ${await res.text()}`);
-
       const data = await res.json();
-
       await db
         .update(schema.accounts)
         .set({
@@ -40,14 +36,12 @@ export async function getUserStravaClient(
           expires_at: data.expires_at,
         })
         .where(eq(schema.accounts.providerAccountId, acc.providerAccountId));
-
       return {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
         expiresAt: data.expires_at,
       };
     }
-
     return {
       accessToken: acc.access_token!,
       refreshToken: acc.refresh_token ?? "",
