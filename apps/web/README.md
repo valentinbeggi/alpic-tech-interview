@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# install deps
 
-## Getting Started
+pnpm install
 
-First, run the development server:
+# create db + run migrations
+
+pnpm run db:generate
+pnpm run db:migrate
+
+Duplicate .env.example to .env.local and fill in the values:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+SQLITE_PATH=.data/app.db
+OPENAI_API_KEY=YOUR_OPENAI_KEY
+
+# Auth.js (NextAuth v5)
+
+AUTH_SECRET=your-random-long-string
+AUTH_URL=http://localhost:3000
+
+# Strava OAuth (from https://www.strava.com/settings/api)
+
+AUTH_STRAVA_ID=xxx
+AUTH_STRAVA_SECRET=xxx
+
+# MCP (internal auth between web and MCP server)
+
+MCP_INTERNAL_TOKEN=dev-internal-bearer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+In Strava app settings, set redirect to: localhost
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Sign in with Strava in the header.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Use the chat
+   Some handy prompts (also available as quick chips):
 
-## Learn More
+“What are my last 3 activities?”
 
-To learn more about Next.js, take a look at the following resources:
+“Rename my last run to Test Rename”
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+“Log a 45-min strength session yesterday at 18:15 (private) with a name you choose”
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+“Who am I ?” (shows your athlete profile)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. MCP (Model Context Protocol)
+   The app exposes an MCP server over Streamable HTTP at /api/mcp.
+   It includes tools like strava.getRecentActivities, strava.renameActivity, strava.createManualActivity, and a resource strava://athlete.
